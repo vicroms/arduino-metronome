@@ -13,7 +13,7 @@ Potentiometer::Potentiometer(const int pin, const unsigned long sample_interval)
     memset(m_readings, 0, sizeof(double) * MAX_READINGS);
 }
 
-int Potentiometer::average() { return m_avg; }
+int Potentiometer::value() { return m_avg; }
 
 void Potentiometer::poll(const unsigned long current_time)
 {

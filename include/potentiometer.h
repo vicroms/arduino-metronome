@@ -6,8 +6,14 @@ namespace vicroms
 {
     struct Potentiometer
     {
+        // Starts polling for potentiometer reading changes on a specific pin (analog).
+        // A longer sample interval helps to deal with slight variations.
         Potentiometer(const int pin, const unsigned long sample_interval);
-        int average();
+
+        // Gets average value reading on potentiometer (ranges from 0 to 1023)
+        int value();
+
+        // Updates potentiometer state
         void poll(const unsigned long current_time);
 
     private:

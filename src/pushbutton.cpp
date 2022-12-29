@@ -21,8 +21,6 @@ PushButton::PushButton(const int pin,
 {
 }
 
-const int PushButton::pin() const { return m_pin; }
-
 void PushButton::poll(const unsigned long current_time)
 {
     if (current_time - m_time_last_read >= m_sample_interval)
@@ -39,7 +37,7 @@ void PushButton::poll(const unsigned long current_time)
         {
             key_release();
         }
-        else if (current_state == LOW)
+        else if (current_state == LOW && m_read_count < SIZE_MAX)
         {
             m_read_count++;
         }

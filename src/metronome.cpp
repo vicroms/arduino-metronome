@@ -8,7 +8,9 @@
 
 using namespace vicroms;
 
+static constexpr int POTENTIOMETER_PIN = A0;
 static constexpr int PUSH_BUTTON_PIN = 2;
+static constexpr int PIEZO_PIN = 8;
 
 enum class TimeSignature : size_t
 {
@@ -48,8 +50,6 @@ struct MetronomeState
 
     void beat()
     {
-        static constexpr int PIEZO_PIN = 8;
-
         const auto p = m_pattern->cur();
         auto& matrix = display();
         matrix.fillScreen(0);
@@ -123,20 +123,23 @@ private:
 };
 
 // register callback
-void mode_changed();
+void next_signature();
 
 static MetronomeState metronome;
-static Potentiometer pot(A0, 10 /*ms*/);
-static PushButton signature_button(
-    PUSH_BUTTON_PIN, 25 /*ms*/, nullptr /* do nothing on short press*/, 40 /* long press ticks */, &mode_changed);
+static Potentiometer pot(POTENTIOMETER_PIN, 10 /*ms*/);
+static PushButton signature_button(PUSH_BUTTON_PIN,
+                                   25 /*ms*/,
+                                   nullptr /* do nothing on short press*/,
+                                   40 /* long press ticks (40 * 25ms = 1 second) */,
+                                   &next_signature);
 
-void mode_changed() { metronome.next_signature(); }
+void next_signature() { metronome.next_signature(); }
 
 void setup()
 {
     Serial.begin(9600);
 
-    pinMode(signature_button.pin(), INPUT);
+    pinMode(PUSH_BUTTON_PIN, INPUT);
 
     auto& matrix = display();
     matrix.begin();
@@ -146,20 +149,18 @@ void setup()
 void loop()
 {
     signature_button.poll(millis());
-
     pot.poll(millis());
+
     // we want a non-linear curve on the potentiometer readings for finer control at high BPMs
-    const auto adjusted_reading = sqrt(pot.average()) * 100;
+    const auto adjusted_reading = sqrt(pot.value()) * 100;
 
     // map the pot average to an interval (bpm = 1000 / interval * 60).
     // bpm can be set between 45bpm (1500 ms interval) and 300bpm (200ms interval).
     // Must be mapped in reverse to encode non linear tempo mapping.
     metronome.interval = map(adjusted_reading, 0, 3200, 1500, 200);
 
-    // check whether the button has been pressed to change time sig
-
     // is it time for the next beat
-    unsigned long currentTime = millis();
+    const auto currentTime = millis();
     if (currentTime - metronome.previous_time > metronome.interval)
     {
         metronome.previous_time = currentTime;
